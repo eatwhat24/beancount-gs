@@ -43,3 +43,22 @@ jobs:
           push: true
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
+
+      - name: Log in to Alibaba Cloud Container Registry
+        env:
+          REGISTRY: ${{ secrets.ALIYUN_REGISTRY }}
+          USERNAME: ${{ secrets.ALIYUN_USERNAME }}
+          PASSWORD: ${{ secrets.ALIYUN_PASSWORD }}
+        run: echo "${{ secrets.ALIYUN_PASSWORD }}" | docker login ${{ env.REGISTRY }} -u ${{ secrets.ALIYUN_USERNAME }} --password-stdin
+
+      - name: Extract branch name
+        id: extract_branch
+        run: echo "branch_name=${GITHUB_REF##*/}" >> $GITHUB_ENV
+
+      - name: Build and Push Aliyun Docker image
+        env:
+          IMAGE_NAME: ${{ secrets.ALIYUN_REGISTRY }}/xdbin/beancount-gs
+          TAG: ${{ steps.meta.outputs.tags }}
+        run: |
+          docker build -t $IMAGE_NAME:$TAG .
+          docker push $IMAGE_NAME:$TAG
